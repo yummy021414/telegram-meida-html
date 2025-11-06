@@ -1,0 +1,58 @@
+cd /root/meiti 
+
+
+# 查看状态
+docker ps
+
+# 查看日志
+docker-compose logs -f
+
+# 重启服务
+docker-compose restart
+
+# 查看 Nginx 状态
+systemctl status nginx
+
+
+
+# 查看详细日志
+docker-compose logs --tail=200 | grep -E "process_group|group_buffer|ERROR"
+
+# 检查是否有错误
+docker-compose logs --tail=500 | grep ERROR
+
+# 强制重启容器
+docker-compose restart
+
+# 查看新日志
+docker-compose logs -f
+
+
+
+# 查看完整日志
+docker-compose logs --tail=500 | grep -A 10 -B 5 "确认收集完毕\|finish_album\|callback"
+
+# 查看是否有超时或错误
+docker-compose logs | grep -E "Timeout|Error|Exception" | tail -50
+
+# 强制重启
+docker-compose restart
+
+# 实时查看日志
+docker-compose logs -f
+
+
+
+
+
+
+# 按 Ctrl+C 停止当前日志
+
+# 搜索关键日志
+docker logs telegram-album-bot 2>&1 | grep -E "媒体已保存|处理用户|保存成功|ERROR|Exception"
+
+
+
+
+
+

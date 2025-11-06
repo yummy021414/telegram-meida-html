@@ -1,0 +1,40 @@
+========================================
+最终修复版本 bot.py
+========================================
+
+修改内容:
+- 移除 asyncio.run(init_database())
+- 使用 application.post_init 钩子初始化数据库
+- 避免事件循环冲突
+
+========================================
+
+上传步骤:
+
+1. 使用 FinalShell 上传 bot.py 到服务器
+   目标路径: ~/meiti/bot.py
+   选择: 覆盖
+
+2. 在服务器运行:
+   cd ~/meiti
+   docker-compose down
+   docker-compose up -d --build
+   docker-compose logs -f
+
+3. 预期成功日志:
+   [BOT] Database initialization completed via post_init
+   [BOT] Cleanup job scheduled
+   [BOT] Bot starting...
+   [BOT] Application started
+   [BOT] HTTP Request: POST... "200 OK"
+
+========================================
+
+这次修改解决了 asyncio.run() 和 run_polling() 
+之间的事件循环冲突问题。
+
+确保能成功启动！
+
+========================================
+
+

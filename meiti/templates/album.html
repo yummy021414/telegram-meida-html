@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 移除CSP，避免与浏览器扩展冲突 -->
+    <title>{{ album_name }} - 相册</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 25%, #bbdefb 50%, #90caf9 75%, #e1bee7 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* 确保body和html都是可见的 */
+        html {
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: block !important;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(227, 242, 253, 0.98) 25%, rgba(187, 222, 251, 0.98) 50%, rgba(144, 202, 249, 0.98) 75%, rgba(225, 190, 231, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            overflow: visible;
+            display: flex !important;
+            min-height: calc(100vh - 40px);
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* 左侧组导航 */
+        .group-nav {
+            width: 200px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(227, 242, 253, 0.9) 25%, rgba(187, 222, 251, 0.9) 50%, rgba(144, 202, 249, 0.9) 75%, rgba(225, 190, 231, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(224, 224, 224, 0.5);
+            padding: 20px 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .group-nav-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            font-size: 15px;
+            color: #666;
+        }
+        
+        .group-nav-item:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .group-nav-item.active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(227, 242, 253, 0.6) 50%, rgba(225, 190, 231, 0.6) 100%);
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        /* 右侧内容区 */
+        .content-area {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.95) 25%, rgba(187, 222, 251, 0.95) 50%, rgba(144, 202, 249, 0.95) 75%, rgba(225, 190, 231, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .album-header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .album-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .album-notice {
+            font-size: 16px;
+            color: #ff6b6b;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, rgba(255, 243, 243, 0.9) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+            margin-bottom: 10px;
+            text-align: center;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* 文字说明区域 */
+        .group-text {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 30px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(249, 249, 249, 0.8) 0%, rgba(227, 242, 253, 0.8) 50%, rgba(225, 190, 231, 0.8) 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* 媒体容器 - 竖向排列 */
+        .media-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px;
+            margin-top: 20px;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+        
+        .media-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: #f0f0f0;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .media-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        
+        .media-item.photo {
+            position: relative;
+            min-height: 200px;
+            background: #f5f5f5;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .media-item.photo img {
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            visibility: visible !important;
+            max-height: 80vh;
+            object-fit: contain;
+            opacity: 1 !important;  /* 默认可见，不等待加载完成 */
+            transition: opacity 0.3s;
+        }
+        
+        .media-item.photo img.loaded {
+            opacity: 1 !important;
+        }
+        
+        .media-item.photo .loading-spinner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .media-item.video {
+            background: #000;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+        }
+        
+        .media-item.video video {
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            max-height: 80vh;
+            object-fit: contain;
+            background: #000;
+        }
+        
+        /* 移动端视频优化 */
+        @media (max-width: 768px) {
+            .media-item.video video {
+                max-width: 100vw;
+                min-height: 300px;
+            }
+        }
+        
+        .media-item.video::before {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            color: white;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+            pointer-events: none;
+            opacity: 0.9;
+        }
+        
+        .media-item.video:hover::before {
+            opacity: 1;
+        }
+        
+        .media-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            padding: 12px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .media-item:hover .media-caption {
+            display: block;
+        }
+        
+        
+        /* 大图查看模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            cursor: pointer;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .modal-content video {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            object-fit: contain;
+        }
+        
+        .modal-content img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .modal-close:hover {
+            color: #ccc;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #666;
+            font-size: 15px;
+            margin-top: 40px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .group-nav {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 0;
+            }
+            
+            .group-nav-item {
+                white-space: nowrap;
+                padding: 12px 20px;
+                min-width: 100px;
+            }
+            
+            .content-area {
+                padding: 20px;
+            }
+            
+            .album-title {
+                font-size: 24px;
+            }
+            
+            .album-notice {
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+            
+            .group-text {
+                font-size: 16px;
+                padding: 20px;
+            }
+            
+            .media-grid {
+                gap: 16px;
+            }
+            
+            .media-item.photo img,
+            .media-item.video video {
+                max-height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- 加载提示（默认隐藏，JS失败时也确保不遮挡） -->
+    <div id="loadingIndicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: -1; display: none !important; align-items: center; justify-content: center; flex-direction: column; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important;">
+        <div style="font-size: 18px; color: #667eea; margin-bottom: 20px;">正在加载相册...</div>
+        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    </div>
+    
+    <!-- 主内容容器，默认显示（不依赖JS） -->
+    <div class="container" id="mainContainer" style="display: flex !important; visibility: visible !important; opacity: 1 !important; position: relative !important;">
+        <!-- 左侧组导航 -->
+        <div class="group-nav">
+            {% if groups %}
+                {% for group in groups %}
+                <div class="group-nav-item {% if loop.first %}active{% endif %}" 
+                     onclick="showGroup({{ loop.index0 }})">
+                    第 {{ group.number }} 组
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 20px; color: #999;">暂无数据</div>
+            {% endif %}
+        </div>
+        
+        <!-- 右侧内容区 -->
+        <div class="content-area">
+            <div class="album-header">
+                <div class="album-notice">本相册时间只停留3天 请尽快查看</div>
+            </div>
+            
+            {% if groups %}
+                {% for group in groups %}
+            <div class="group-content" id="group-{{ loop.index0 }}" 
+                 style="{% if loop.first %}display: block !important;{% else %}display: none;{% endif %} visibility: visible !important; opacity: 1 !important; padding: 20px 0; background: rgba(255,255,255,0.5) !important;">
+                
+                {% if group.text %}
+                <div class="group-text">{{ group.text }}</div>
+                {% endif %}
+                
+                <div class="media-grid">
+                    {% if group.media %}
+                        {% for media in group.media %}
+                        <div class="media-item {{ media.file_type }} {% if loop.first %}first-item{% endif %}" 
+                             onclick="openModal('{{ domain }}/proxy/{{ media.file_id }}', '{{ media.file_type }}')">
+                            {% if media.file_type == 'photo' %}
+                            <div class="loading-spinner"></div>
+                            <img 
+                                src="{{ domain }}/proxy/{{ media.file_id }}"
+                                alt="照片"
+                                loading="lazy"
+                                onload="this.classList.add('loaded'); this.parentElement.querySelector('.loading-spinner')?.remove();"
+                                onerror="handleImageError(this); this.parentElement.querySelector('.loading-spinner')?.remove();"
+                            >
+                            {% elif media.file_type == 'video' %}
+                            <video 
+                                controls
+                                playsinline
+                                webkit-playsinline
+                                x5-playsinline
+                                preload="auto"
+                                src="{{ domain }}/proxy/{{ media.file_id }}"
+                                style="width: 100%; height: auto; background: #000;"
+                                onerror="this.parentElement.innerHTML='<div style=\'padding:20px;text-align:center;color:#999;\'>视频加载失败</div>'"
+                                onloadedmetadata="console.log('Video loaded:', this.videoWidth, 'x', this.videoHeight)"
+                            >
+                                <source src="{{ domain }}/proxy/{{ media.file_id }}" type="video/mp4">
+                                <source src="{{ domain }}/proxy/{{ media.file_id }}" type="video/webm">
+                                您的浏览器不支持视频播放
+                            </video>
+                            {% endif %}
+                            
+                            {% if media.caption and not loop.first %}
+                            <div class="media-caption">{{ media.caption }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="padding: 20px; text-align: center; color: #999;">
+                            该组没有媒体文件
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 40px; text-align: center; color: #999;">
+                    <p>该相册暂无内容</p>
+                </div>
+            {% endif %}
+            
+            <div class="footer">
+                <p>本网站由妄川提供 商务合作联系 <a href="https://t.me/faziliaobot" target="_blank" style="color: #667eea; text-decoration: none;">@faziliaobot</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 大图查看模态框 -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <img id="modalImage" class="modal-content" src="" alt="">
+        <video id="modalVideo" class="modal-content" controls autoplay style="display: none; width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; object-fit: contain;"></video>
+    </div>
+    
+    <script>
+        // 强制隐藏加载层（兜底保障，确保页面一定可见）
+        setTimeout(function() {
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) {
+                loading.style.display = 'none';
+                loading.style.opacity = '0';
+                loading.style.pointerEvents = 'none';
+            }
+            const container = document.getElementById('mainContainer');
+            if (container) {
+                container.style.display = 'flex';
+                container.style.visibility = 'visible';
+                container.style.opacity = '1';
+            }
+        }, 3000);
+        
+        // JS错误日志上报（便于排查问题）
+        window.onerror = function(msg, src, line, col, error) {
+            console.error('页面错误:', msg, src, line, col, error);
+            
+            // 尝试上报错误（如果服务端支持）
+            try {
+                fetch('/log_js_error', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        msg: msg,
+                        src: src,
+                        line: line,
+                        col: col,
+                        error: error ? error.toString() : null,
+                        userAgent: navigator.userAgent,
+                        url: window.location.href
+                    })
+                }).catch(function() {
+                    // 忽略上报失败
+                });
+            } catch (e) {
+                // 忽略上报错误
+            }
+            
+            // 确保内容显示
+            const loading = document.getElementById('loadingIndicator');
+            const container = document.getElementById('mainContainer');
+            if (loading) {
+                loading.style.display = 'none';
+                loading.style.opacity = '0';
+                loading.style.pointerEvents = 'none';
+            }
+            if (container) {
+                container.style.display = 'flex';
+            }
+            
+            return false; // 不阻止默认错误处理
+        };
+        
+        // 捕获未处理的Promise错误
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('未处理的Promise错误:', e.reason);
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) {
+                loading.style.display = 'none';
+                loading.style.opacity = '0';
+                loading.style.pointerEvents = 'none';
+            }
+        });
+        
+        // 切换显示组
+        function showGroup(index) {
+            // 隐藏所有组
+            document.querySelectorAll('.group-content').forEach(function(el) {
+                el.style.display = 'none';
+            });
+            
+            // 显示选中的组
+            document.getElementById('group-' + index).style.display = 'block';
+            
+            // 更新导航状态
+            document.querySelectorAll('.group-nav-item').forEach(function(el, i) {
+                if (i === index) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            
+            // 滚动到顶部
+            document.querySelector('.content-area').scrollTop = 0;
+        }
+        
+        // 打开大图/视频
+        function openModal(url, type) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            
+            modal.classList.add('active');
+            
+            if (type === 'video') {
+                modalImage.style.display = 'none';
+                modalVideo.style.display = 'block';
+                modalVideo.src = url;
+                modalVideo.controls = true;
+                modalVideo.autoplay = true;
+                // 设置视频为全屏尺寸
+                modalVideo.style.width = '100vw';
+                modalVideo.style.height = '100vh';
+                modalVideo.style.maxWidth = '100vw';
+                modalVideo.style.maxHeight = '100vh';
+                modalVideo.style.objectFit = 'contain';
+                modalVideo.style.position = 'fixed';
+                modalVideo.style.top = '0';
+                modalVideo.style.left = '0';
+                modalVideo.style.zIndex = '1002';
+                
+                // 视频加载后尝试进入全屏
+                const tryFullscreen = function() {
+                    if (modalVideo.requestFullscreen) {
+                        modalVideo.requestFullscreen().catch(e => {
+                            console.log('Fullscreen request failed:', e);
+                        });
+                    } else if (modalVideo.webkitRequestFullscreen) {
+                        modalVideo.webkitRequestFullscreen();
+                    } else if (modalVideo.mozRequestFullScreen) {
+                        modalVideo.mozRequestFullScreen();
+                    } else if (modalVideo.msRequestFullscreen) {
+                        modalVideo.msRequestFullscreen();
+                    }
+                };
+                
+                modalVideo.addEventListener('loadedmetadata', tryFullscreen, { once: true });
+                // 如果元数据已经加载，立即尝试全屏
+                if (modalVideo.readyState >= 1) {
+                    setTimeout(tryFullscreen, 100);
+                }
+            } else {
+                modalVideo.style.display = 'none';
+                modalImage.style.display = 'block';
+                modalImage.src = url;
+            }
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalImage = document.getElementById('modalImage');
+            
+            // 退出全屏
+            if (document.fullscreenElement || document.webkitFullscreenElement || 
+                document.mozFullScreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
+            modal.classList.remove('active');
+            modalVideo.pause();
+            modalVideo.src = '';
+            modalImage.src = '';
+        }
+        
+        // 按 ESC 键关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // 图片错误处理
+        function handleImageError(img) {
+            // 尝试重新加载（可能是临时网络问题）
+            if (!img.dataset.retryCount) {
+                img.dataset.retryCount = '0';
+            }
+            
+            const retryCount = parseInt(img.dataset.retryCount);
+            if (retryCount < 2) {
+                img.dataset.retryCount = (retryCount + 1).toString();
+                // 延迟重试
+                setTimeout(() => {
+                    const originalSrc = img.src;
+                    img.src = '';
+                    img.src = originalSrc + '&_retry=' + Date.now();
+                }, 1000 * (retryCount + 1));
+            } else {
+                // 显示占位图
+                img.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'400\'%3E%3Crect fill=\'%23f0f0f0\' width=\'400\' height=\'400\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'16\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\'%3E图片加载失败%3C/text%3E%3C/svg%3E';
+                img.style.opacity = '0.5';
+            }
+        }
+        
+        // 图片懒加载优化和预加载
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('img[loading="lazy"]');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        // 开始加载图片
+                        if (!img.src || img.src === '') {
+                            img.src = img.dataset.src || img.getAttribute('src');
+                        }
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '50px' // 提前50px开始加载
+            });
+            
+            images.forEach(img => {
+                // 如果图片已经在视口内，立即加载
+                const rect = img.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight + 50 && rect.bottom > -50;
+                
+                if (isVisible) {
+                    // 立即加载可见图片
+                    img.src = img.src || img.getAttribute('src');
+                } else {
+                    // 使用懒加载
+                    imageObserver.observe(img);
+                }
+            });
+            
+            // 预加载下一组的图片（当前组加载完成后）
+            function preloadNextGroup() {
+                const activeGroup = document.querySelector('.group-content.active');
+                if (!activeGroup) return;
+                
+                const nextGroup = activeGroup.nextElementSibling;
+                if (nextGroup) {
+                    const nextImages = nextGroup.querySelectorAll('img[loading="lazy"]');
+                    nextImages.forEach((img, index) => {
+                        // 延迟预加载，避免阻塞当前组
+                        setTimeout(() => {
+                            if (!img.classList.contains('preloaded')) {
+                                const link = document.createElement('link');
+                                link.rel = 'prefetch';
+                                link.href = img.getAttribute('src') || img.src;
+                                document.head.appendChild(link);
+                                img.classList.add('preloaded');
+                            }
+                        }, index * 100); // 每个图片间隔100ms
+                    });
+                }
+            }
+            
+            // 监听组切换，预加载下一组
+            const groupNavItems = document.querySelectorAll('.group-nav-item');
+            groupNavItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    setTimeout(preloadNextGroup, 500);
+                });
+            });
+            
+            // 初始预加载
+            setTimeout(preloadNextGroup, 1000);
+        });
+    </script>
+</body>
+</html>
